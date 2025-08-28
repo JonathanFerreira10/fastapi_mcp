@@ -330,6 +330,16 @@ class FastApiMCP:
                 """
             ),
         ] = "/mcp",
+        stateless: Annotated[
+            bool,
+            Doc(
+                """
+                Whether to force stateless transport. When True, the MCP server will ignore
+                the mcp-session-id header and treat all requests as stateless.
+                Defaults to False.
+                """
+            ),
+        ] = False
     ) -> None:
         """
         Mount the MCP server with HTTP transport to **any** FastAPI app or APIRouter.
@@ -346,12 +356,15 @@ class FastApiMCP:
         if not router:
             router = self.fastapi
 
-        assert isinstance(router, (FastAPI, APIRouter)), f"Invalid router type: {type(router)}"
+        assert isinstance(router, (
+        FastAPI, APIRouter)), f"Invalid router type: {type(router)}"
 
-        http_transport = FastApiHttpSessionManager(mcp_server=self.server)
+        http_transport = FastApiHttpSessionManager(mcp_server=self.server,
+                                                   stateless=stateless)
         dependencies = self._auth_config.dependencies if self._auth_config else None
 
-        self._register_mcp_endpoints_http(router, http_transport, mount_path, dependencies)
+        self._register_mcp_endpoints_http(router, http_transport, mount_path,
+                                          dependencies)
         self._setup_auth()
         self._http_transport = http_transport  # Store reference
 
